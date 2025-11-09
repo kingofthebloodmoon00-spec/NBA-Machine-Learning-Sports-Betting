@@ -10,7 +10,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from src.Utils.Dictionaries import team_index_07, team_index_08, team_index_12, team_index_13, team_index_14, team_index_current
 
 # ---------- SAFE CONFIG LOADING ----------
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+repo_root = "/content/NBA-Machine-Learning-Sports-Betting"
 config_path = os.path.join(repo_root, "config.toml")
 
 if not os.path.exists(config_path):
