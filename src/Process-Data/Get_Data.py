@@ -19,15 +19,14 @@ con = sqlite3.connect("../../Data/TeamData.sqlite")
 # Loop through all get-data sections
 for key, value in config.items():
     if key.startswith("get-data."):
-        # Parse dates in MM/DD/YYYY format (matches your TOML)
-        date_pointer = datetime.strptime(value['start_date'], "%m/%d/%Y").date()
-        end_date = datetime.strptime(value['end_date'], "%m/%d/%Y").date()
+        date_pointer = datetime.strptime(value['start_date'], "%Y-%m-%d").date()
+        end_date = datetime.strptime(value['end_date'], "%Y-%m-%d").date()
 
         while date_pointer <= end_date:
             print("Getting data:", date_pointer)
-
             raw_data = get_json_data(
-                url.format(date_pointer.month, date_pointer.day, value['start_year'], date_pointer.year, key))
+                url.format(date_pointer.month, date_pointer.day, value['start_year'], date_pointer.year, key)
+            )
             df = to_data_frame(raw_data)
 
             df['Date'] = str(date_pointer)
@@ -35,5 +34,3 @@ for key, value in config.items():
 
             date_pointer += timedelta(days=1)
             time.sleep(random.randint(1, 3))
-
-con.close()
