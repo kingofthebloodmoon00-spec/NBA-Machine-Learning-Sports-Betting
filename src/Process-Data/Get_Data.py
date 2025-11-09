@@ -1,3 +1,4 @@
+# Original imports and setup unchanged
 import os
 import random
 import sqlite3
@@ -10,20 +11,21 @@ import toml
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from src.Utils.tools import get_json_data, to_data_frame
 
-# Load config
 config = toml.load("../../config.toml")
+
 url = config['data_url']
 
 con = sqlite3.connect("../../Data/TeamData.sqlite")
 
-# Loop through all get-data sections
+# === Updated loop ===
 for key, value in config.items():
-    if key.startswith("get-data."):
+    if key.startswith("get-data."):  # Only process get-data tables
         date_pointer = datetime.strptime(value['start_date'], "%Y-%m-%d").date()
         end_date = datetime.strptime(value['end_date'], "%Y-%m-%d").date()
 
         while date_pointer <= end_date:
             print("Getting data:", date_pointer)
+
             raw_data = get_json_data(
                 url.format(date_pointer.month, date_pointer.day, value['start_year'], date_pointer.year, key)
             )
@@ -34,3 +36,5 @@ for key, value in config.items():
 
             date_pointer += timedelta(days=1)
             time.sleep(random.randint(1, 3))
+
+con.close()
