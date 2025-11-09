@@ -11,7 +11,7 @@ sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 from src.Utils.tools import get_json_data, to_data_frame
 
 # ---------- SAFE CONFIG LOADING ----------
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+repo_root = "/content/NBA-Machine-Learning-Sports-Betting"
 config_path = os.path.join(repo_root, "config.toml")
 
 if not os.path.exists(config_path):
