@@ -18,7 +18,23 @@ end_date   = "2025-11-08"
 start_year = "2025"
 end_year   = "2026"
 
-[create-games]
+[get-odds-data.2023-24]
+start_date = "2023-10-23"
+end_date   = "2024-04-28"
+start_year = "2023"
+end_year   = "2024"
+
+[get-odds-data.2024-25]
+start_date = "2024-10-21"
+end_date   = "2025-06-20"
+start_year = "2024"
+end_year   = "2025"
+
+[get-odds-data.2025-26]
+start_date = "2025-10-20"
+end_date   = "2025-11-08"
+start_year = "2025"
+end_year   = "2026"
 
 [create-games.2023-24]
 start_date = "2023-10-23"
