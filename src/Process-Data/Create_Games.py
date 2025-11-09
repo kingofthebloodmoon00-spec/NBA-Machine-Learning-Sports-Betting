@@ -1,4 +1,3 @@
-# Original imports and setup unchanged
 import os
 import sqlite3
 import sys
@@ -8,10 +7,17 @@ import pandas as pd
 import toml
 
 sys.path.insert(1, os.path.join(sys.path[0], '../..'))
-from src.Utils.Dictionaries import team_index_07, team_index_08, team_index_12, team_index_13, team_index_14, \
-    team_index_current
+from src.Utils.Dictionaries import team_index_07, team_index_08, team_index_12, team_index_13, team_index_14, team_index_current
 
-config = toml.load("../../config.toml")
+# ---------- SAFE CONFIG LOADING ----------
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+config_path = os.path.join(repo_root, "config.toml")
+
+if not os.path.exists(config_path):
+    raise FileNotFoundError(f"Cannot find config.toml at {config_path}")
+
+config = toml.load(config_path)
+# -----------------------------------------
 
 df = pd.DataFrame
 scores = []
@@ -21,70 +27,69 @@ OU_Cover = []
 games = []
 days_rest_away = []
 days_rest_home = []
-teams_con = sqlite3.connect("../../Data/TeamData.sqlite")
-odds_con = sqlite3.connect("../../Data/OddsData.sqlite")
+teams_con = sqlite3.connect(os.path.join(repo_root, "Data/TeamData.sqlite"))
+odds_con = sqlite3.connect(os.path.join(repo_root, "Data/OddsData.sqlite"))
 
-# === Updated loop ===
-for key, value in config.items():
-    if key.startswith("create-games."):  # Only process create-games tables
-        print("Processing season:", key)
-        odds_df = pd.read_sql_query(f"select * from \"odds_{key.split('.')[-1]}_new\"", odds_con, index_col="index")
-        team_table_str = key
-        year_count = 0
-        season = key.split('.')[-1]
+for key, value in config['create-games'].items():
+    print(key)
+    odds_df = pd.read_sql_query(f"select * from \"odds_{key}_new\"", odds_con, index_col="index")
+    team_table_str = key
+    year_count = 0
+    season = key
 
-        for row in odds_df.itertuples():
-            home_team = row[2]
-            away_team = row[3]
-            date = row[1]
+    for row in odds_df.itertuples():
+        home_team = row[2]
+        away_team = row[3]
 
-            team_df = pd.read_sql_query(f"select * from \"{date}\"", teams_con, index_col="index")
-            if len(team_df.index) == 30:
-                scores.append(row[8])
-                OU.append(row[4])
-                days_rest_home.append(row[10])
-                days_rest_away.append(row[11])
-                win_margin.append(1 if row[9] > 0 else 0)
+        date = row[1]
 
-                if row[8] < row[4]:
-                    OU_Cover.append(0)
-                elif row[8] > row[4]:
-                    OU_Cover.append(1)
-                else:
-                    OU_Cover.append(2)
+        team_df = pd.read_sql_query(f"select * from \"{date}\"", teams_con, index_col="index")
+        if len(team_df.index) == 30:
+            scores.append(row[8])
+            OU.append(row[4])
+            days_rest_home.append(row[10])
+            days_rest_away.append(row[11])
+            if row[9] > 0:
+                win_margin.append(1)
+            else:
+                win_margin.append(0)
 
-                if season == '2007-08':
-                    home_team_series = team_df.iloc[team_index_07.get(home_team)]
-                    away_team_series = team_df.iloc[team_index_07.get(away_team)]
-                elif season in ['2008-09','2009-10','2010-11','2011-12']:
-                    home_team_series = team_df.iloc[team_index_08.get(home_team)]
-                    away_team_series = team_df.iloc[team_index_08.get(away_team)]
-                elif season == "2012-13":
-                    home_team_series = team_df.iloc[team_index_12.get(home_team)]
-                    away_team_series = team_df.iloc[team_index_12.get(away_team)]
-                elif season == '2013-14':
-                    home_team_series = team_df.iloc[team_index_13.get(home_team)]
-                    away_team_series = team_df.iloc[team_index_13.get(away_team)]
-                elif season in ['2022-23','2023-24','2024-25','2025-26']:
-                    home_team_series = team_df.iloc[team_index_current.get(home_team)]
-                    away_team_series = team_df.iloc[team_index_current.get(away_team)]
-                else:
-                    try:
-                        home_team_series = team_df.iloc[team_index_14.get(home_team)]
-                        away_team_series = team_df.iloc[team_index_14.get(away_team)]
-                    except Exception as e:
-                        print(home_team)
-                        raise e
+            if row[8] < row[4]:
+                OU_Cover.append(0)
+            elif row[8] > row[4]:
+                OU_Cover.append(1)
+            elif row[8] == row[4]:
+                OU_Cover.append(2)
 
-                game = pd.concat([home_team_series, away_team_series.rename(
-                    index={col: f"{col}.1" for col in team_df.columns.values}
-                )])
-                games.append(game)
+            if season == '2007-08':
+                home_team_series = team_df.iloc[team_index_07.get(home_team)]
+                away_team_series = team_df.iloc[team_index_07.get(away_team)]
+            elif season == '2008-09' or season == "2009-10" or season == "2010-11" or season == "2011-12":
+                home_team_series = team_df.iloc[team_index_08.get(home_team)]
+                away_team_series = team_df.iloc[team_index_08.get(away_team)]
+            elif season == "2012-13":
+                home_team_series = team_df.iloc[team_index_12.get(home_team)]
+                away_team_series = team_df.iloc[team_index_12.get(away_team)]
+            elif season == '2013-14':
+                home_team_series = team_df.iloc[team_index_13.get(home_team)]
+                away_team_series = team_df.iloc[team_index_13.get(away_team)]
+            elif season == '2022-23' or season == '2023-24':
+                home_team_series = team_df.iloc[team_index_current.get(home_team)]
+                away_team_series = team_df.iloc[team_index_current.get(away_team)]
+            else:
+                try:
+                    home_team_series = team_df.iloc[team_index_14.get(home_team)]
+                    away_team_series = team_df.iloc[team_index_14.get(away_team)]
+                except Exception as e:
+                    print(home_team)
+                    raise e
+            game = pd.concat([home_team_series, away_team_series.rename(
+                index={col: f"{col}.1" for col in team_df.columns.values}
+            )])
+            games.append(game)
 
 odds_con.close()
 teams_con.close()
-
-# Rest of the file unchanged
 season = pd.concat(games, ignore_index=True, axis=1)
 season = season.T
 frame = season.drop(columns=['TEAM_ID', 'TEAM_ID.1'])
@@ -94,12 +99,11 @@ frame['OU'] = np.asarray(OU)
 frame['OU-Cover'] = np.asarray(OU_Cover)
 frame['Days-Rest-Home'] = np.asarray(days_rest_home)
 frame['Days-Rest-Away'] = np.asarray(days_rest_away)
-
+# fix types
 for field in frame.columns.values:
     if 'TEAM_' in field or 'Date' in field or field not in frame:
         continue
     frame[field] = frame[field].astype(float)
-
-con = sqlite3.connect("../../Data/dataset.sqlite")
-frame.to_sql("dataset_2012-26_new", con, if_exists="replace")
+con = sqlite3.connect(os.path.join(repo_root, "Data/dataset.sqlite"))
+frame.to_sql("dataset_2012-24_new", con, if_exists="replace")
 con.close()
