@@ -8,10 +8,17 @@ class SbrOddsProvider:
         self.games, self.api_data = self._fetch_sbr_games()
 
     def _fetch_sbr_games(self):
-        """Fetch today’s NBA games and odds from SBR API."""
         url = "https://www.sportsbookreview.com/api/betting-odds/event/scoreboard/nba/?market=spread"
-        response = requests.get(url)
-        data = response.json()
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                          "AppleWebKit/537.36 (KHTML, like Gecko) "
+                          "Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/javascript, */*; q=0.01",
+            "X-Requested-With": "XMLHttpRequest"
+        }
+        resp = requests.get(url, headers=headers)
+        resp.raise_for_status()  # raises error if not 200
+        data = resp.json()
 
         games = []
         api_data = []
@@ -20,7 +27,7 @@ class SbrOddsProvider:
             home = event['home_team']['name']
             away = event['away_team']['name']
 
-            # Fix for LA Clippers naming to match original code
+            # Fix for LA Clippers naming
             if home == "Los Angeles Clippers":
                 home = "LA Clippers"
             if away == "Los Angeles Clippers":
